@@ -3,8 +3,13 @@
 set(STM32_CHIP STM32F103C8)
 set(TOOLCHAIN_PREFIX /usr/local)
 set(TARGET_TRIPLET arm-none-eabi)
+set(RUSTC_TARGET_TRIPLE "${TARGET_TRIPLET}")
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/stm32-cmake/cmake/gcc_stm32.cmake)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/stm32-cmake/cmake)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+list(APPEND CMAKE_LIBRARY_PATH "${CMAKE_SOURCE_DIR}/rust")
+
 set(CHIBIOS_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/ChibiOS)
 #set(STM32Cube_DIR /Users/proffan/STM32Cube/Repository/STM32Cube_FW_F1_V1.4.0)
 cmake_minimum_required(VERSION 3.4)
@@ -15,6 +20,8 @@ ENABLE_LANGUAGE(ASM)
 
 # test build all available ChibiOS COMPONENTS for F4 chip
 FIND_PACKAGE(ChibiOS 16 COMPONENTS rt hal adc dac can dac ext gpt i2c i2s icu mmc_spi pal pwm rtc sdc serial serial_usb spi st uart usb chprintf memstreams nullstreams evtimer shell syscalls REQUIRED)
+
+FIND_PACKAGE(rustc REQUIRED)
 
 #FIND_PACKAGE(ChibiOS 16 COMPONENTS rt hal pal  REQUIRED)
 
@@ -28,7 +35,26 @@ INCLUDE_DIRECTORIES(
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
 
+add_custom_command(
+    OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/demo.o
+    COMMAND
+        rustc -C opt-level=2 -Z no-landing-pads --target thumbv7m-none-eabi -g --emit obj -L libcore-thumbv7m -o ${CMAKE_CURRENT_BINARY_DIR}/demo.o ./demo.rs
+    WORKING_DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}
+    VERBATIM
+    )
 
+add_custom_target(demo_target DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/demo.o)
+
+# create an library target out of the library compilation result
+add_library(demo STATIC IMPORTED GLOBAL)
+add_dependencies(demo demo_target)
+
+# specify where the library is and where to find the headers
+set_target_properties(demo
+    PROPERTIES
+    IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/demo.o)
 
 ADD_DEFINITIONS(-DCORTEX_USE_FPU=FALSE)
 
@@ -39,7 +65,7 @@ set(SOURCE_FILES main.c board/board.c board/board.h config/mcuconf.h config/halc
 
 add_executable(${CMAKE_PROJECT_NAME}.elf ${SOURCE_FILES}  ${ChibiOS_SOURCES})
 
-TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}.elf)
+TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}.elf demo)
 
 STM32_SET_TARGET_PROPERTIES(${CMAKE_PROJECT_NAME}.elf)
 STM32_ADD_HEX_BIN_TARGETS(${CMAKE_PROJECT_NAME}.elf)

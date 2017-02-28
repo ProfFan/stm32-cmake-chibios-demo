@@ -18,6 +18,10 @@
 #include "hal.h"
 #include "test.hpp"
 
+// Rust function!
+
+extern unsigned char rust_main();
+
 int main(void) {
 
   halInit();
@@ -27,6 +31,7 @@ int main(void) {
 
   while (true) {
     if (palReadPad(GPIOB, 13))
+    rust_main();
     chThdSleepMilliseconds(500);
   }
 }
