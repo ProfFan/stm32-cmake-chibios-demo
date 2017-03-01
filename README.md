@@ -39,7 +39,12 @@ To use the toolchain, you'll need to copy contents of the `cmake` folder into cm
 
 ## Common usage
 
-    cmake -DSTM32_CHIP=<chip> -DCMAKE_TOOLCHAIN_FILE=<path_to_gcc_stm32.cmake> -DCMAKE_BUILD_TYPE=Debug <path_to_source_dir>
+```
+mkdir build
+cmake ..
+make
+make flash
+```
 
 Where `<chip>` is the STM32 chip name (e.g. `STM32F100C8`, `STM32F407IG`).
 
