@@ -1,7 +1,6 @@
 # define chip used in this project, this set must define before project definition
 # for this project dont use cmake commandline option -DSTM32_CHIP=<chip>
 set(STM32_CHIP STM32F103C8)
-set(TOOLCHAIN_PREFIX /usr/local)
 set(TARGET_TRIPLET arm-none-eabi)
 set(RUSTC_TARGET_TRIPLE "${TARGET_TRIPLET}")
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/stm32-cmake/cmake/gcc_stm32.cmake)
@@ -37,15 +36,15 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
 
 add_custom_command(
     OUTPUT
-        ${CMAKE_CURRENT_BINARY_DIR}/demo.o
+        ${CMAKE_CURRENT_BINARY_DIR}/target/thumbv7em-none-eabi/debug/librust32.a
     COMMAND
-        rustc -C opt-level=2 -Z no-landing-pads --target thumbv7m-none-eabi -g --emit obj -L libcore-thumbv7m -o ${CMAKE_CURRENT_BINARY_DIR}/demo.o ./demo.rs
+        CARGO_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR}/target xargo build --target thumbv7em-none-eabi
     WORKING_DIRECTORY
         ${CMAKE_CURRENT_SOURCE_DIR}
     VERBATIM
     )
 
-add_custom_target(demo_target DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/demo.o)
+add_custom_target(demo_target DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/target/thumbv7em-none-eabi/debug/librust32.a)
 
 # create an library target out of the library compilation result
 add_library(demo STATIC IMPORTED GLOBAL)
@@ -54,7 +53,7 @@ add_dependencies(demo demo_target)
 # specify where the library is and where to find the headers
 set_target_properties(demo
     PROPERTIES
-    IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/demo.o)
+    IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/target/thumbv7em-none-eabi/debug/librust32.a)
 
 ADD_DEFINITIONS(-DCORTEX_USE_FPU=FALSE)
 

@@ -1,0 +1,22 @@
+[package]
+name = "rust32"
+version = "0.1.0"
+authors = ["Fan Jiang <i@fanjiang.me>"]
+
+[dependencies]
+
+[lib]
+crate-type = ["staticlib"]
+
+[features]
+default = []
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+lto = true
+panic = "abort"
+
+[profile.test]
+panic = "abort"
