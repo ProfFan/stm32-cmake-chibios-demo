@@ -13,7 +13,7 @@
     "no-compiler-rt": true,
     "linker": "arm-none-eabi-gcc",
     "pre-link-args": [
-        "-Tstm32f407.ld",
+        "-Tstm32f103.ld",
         "-nostartfiles"
     ],
     "post-link-args": [
